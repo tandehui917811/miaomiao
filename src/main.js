@@ -1,9 +1,12 @@
 import Vue from 'vue'
 import App from './App.vue'
-import router from './router'
-import store from './store'
+import router from './routers'
+import store from './stores'
 
 Vue.config.productionTip = false
+
+import axios from 'axios'
+Vue.prototype.axios = axios
 
 new Vue({
   router,
