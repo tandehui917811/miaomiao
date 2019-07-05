@@ -1,35 +1,71 @@
 <template>
     <div class="movie_body">
-        <ul>
-            <li>
-                <div class="pic_show"><img src="/images/movie_1.jpg"></div>
-                <div class="info_list">
-                    <h2>无名之辈</h2>
-                    <p><span class="person">17746</span> 人想看</p>
-                    <p>主演: 陈建斌,任素汐,潘斌龙</p>
-                    <p>2018-11-30上映</p>
-                </div>
-                <div class="btn_pre">
-                    预售
-                </div>
-            </li>
-        </ul>
+        <BScroll :handlerScroll=handlerScroll>
+            <ul>
+                <li class='text'>{{ text }}</li>
+                <li v-for='item in comingList' :key='item.id'>
+                    <div class="pic_show"><img :src="item.img | setWH('128.200')"></div>
+                    <div class="info_list">
+                        <h2>{{ item.nm }}</h2>
+                        <p><span class="person">{{ item.wish }}</span> 人想看</p>
+                        <p>主演: {{ item.star }}</p>
+                        <p>{{ item.rt }}</p>
+                    </div>
+                    <div class="btn_pre">
+                        预售
+                    </div>
+                </li>
+            </ul>
+        </BScroll>
     </div>
 </template>
 
 <script>
+import BScroll from '@/components/BScroll'
 export default {
     name : 'ComingSoon',
     data(){
-        return {}
+        return {
+            comingList : [],
+            text : ''
+        }
+    },
+    activated(){
+        var id = this.$store.state.city.id
+        this.axios.get('/api/movieComingList?cityId='+id).then((res) => {
+            let msg = res.data.msg;
+            if(msg == 'ok'){
+                this.comingList = res.data.data.comingList
+            }
+        })
+    },
+    components : {
+        BScroll
+    },
+    methods : {
+        handlerScroll(pos){
+            if(pos.y > 30){
+                this.text = "正在更新中..."
+                this.axios.get('/api/movieOnInfoList?cityId=11').then((res) => {
+                    var msg = res.data.msg;
+                    if(msg == 'ok'){
+                        this.text = "更新完成"
+                        this.movieList = res.data.data.movieList;
+                        setTimeout(() => {
+                            this.text = ''
+                        },1000)
+                    }
+                })
+            }
+        }
     }
-
 }
 </script>
 
 <style scoped>
 #content .movie_body{ flex:1; overflow:auto;}
 .movie_body ul{ margin:0 12px; overflow: hidden;}
+.movie_body .text{padding: 0;margin: 0;border:none}
 .movie_body ul li{ margin-top:12px; display: flex; align-items:center; border-bottom: 1px #e6e6e6 solid; padding-bottom: 10px;}
 .movie_body .pic_show{ width:64px; height: 90px;}
 .movie_body .pic_show img{ width:100%;}

@@ -8,6 +8,10 @@ Vue.config.productionTip = false
 import axios from 'axios'
 Vue.prototype.axios = axios
 
+Vue.filter("setWH",(res,q) => {
+  return res.replace(/w\.h/,q)
+})
+
 new Vue({
   router,
   store,

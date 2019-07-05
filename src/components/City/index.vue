@@ -1,95 +1,99 @@
 <template>
     <div class="city_body">
         <div class="city_list">
-            <div class="city_hot">
-                <h2>热门城市</h2>
-                <ul class="clearfix">
-                    <li>上海</li>
-                    <li>北京</li>
-                    <li>上海</li>
-                    <li>北京</li>
-                    <li>上海</li>
-                    <li>北京</li>
-                    <li>上海</li>
-                    <li>北京</li>
-                </ul>
-            </div>
-            <div class="city_sort">
+            <BScroll ref="city_list">
                 <div>
-                    <h2>A</h2>
-                    <ul>
-                        <li>阿拉善盟</li>
-                        <li>鞍山</li>
-                        <li>安庆</li>
-                        <li>安阳</li>
-                    </ul>
+                    <div class="city_hot">
+                        <h2>热门城市</h2>
+                        <ul class="clearfix">
+                            <li v-for='item in HotList' :key='item.id' @tap='handlerCity(item.nm,item.id)'>{{ item.nm }}</li>
+                        </ul>
+                    </div>
+                    <div class="city_sort" ref='city_sort'>
+                        <div v-for='(item,index) in citiesList' :key='index'>
+                            <h2>{{ item.key }}</h2>
+                            <ul>
+                                <li v-for='itemList in item.list' :key='itemList.id' @tap='handlerCity(itemList.nm,itemList.id)'>{{ itemList.nm }}</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h2>B</h2>
-                    <ul>
-                        <li>北京</li>
-                        <li>保定</li>
-                        <li>蚌埠</li>
-                        <li>包头</li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>A</h2>
-                    <ul>
-                        <li>阿拉善盟</li>
-                        <li>鞍山</li>
-                        <li>安庆</li>
-                        <li>安阳</li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>B</h2>
-                    <ul>
-                        <li>北京</li>
-                        <li>保定</li>
-                        <li>蚌埠</li>
-                        <li>包头</li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>A</h2>
-                    <ul>
-                        <li>阿拉善盟</li>
-                        <li>鞍山</li>
-                        <li>安庆</li>
-                        <li>安阳</li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>B</h2>
-                    <ul>
-                        <li>北京</li>
-                        <li>保定</li>
-                        <li>蚌埠</li>
-                        <li>包头</li>
-                    </ul>
-                </div>	
-            </div>
-        </div>
+            </BScroll>
+        </div> 
         <div class="city_index">
             <ul>
-                <li>A</li>
-                <li>B</li>
-                <li>C</li>
-                <li>D</li>
-                <li>E</li>
+                <li v-for='(item,index) in citiesList' :key='index' @touchstart='handlerTop(index)'>{{ item.key }}</li>
             </ul>
         </div>
     </div>
 </template>
 
 <script>
+import BScroll from '@/components/BScroll'
 export default {
     name : 'NowPlaying',
     data(){
-        return {}
+        return {
+            HotList : [],
+            citiesList : []
+        }
+    },
+    mounted(){
+        this.axios.get('/api/cityList').then((res) => {
+            let msg = res.data.msg;
+            var cities = res.data.data.cities;
+            if(msg == 'ok'){
+                for(let i=0;i<cities.length ;i++){
+                    if(cities[i].isHot){
+                        this.HotList.push(cities[i])
+                    }
+                    var py = cities[i].py.substring(0,1).toUpperCase();
+                    if(this.isCiti(py)){
+                        this.citiesList.push({key:py,list:[{ nm : cities[i].nm , id : cities[i].id }]})
+                    }else{
+                        for(let j=0;j<this.citiesList.length;j++){
+                            if(this.citiesList[j].key === py){
+                                this.citiesList[j].list.push({ nm : cities[i].nm , id : cities[i].id })
+                            }
+                        }
+                    }
+                };
+                this.citiesList.sort(function(a,b){
+                    if(a.key>b.key){
+                        return 1
+                    }else if(a.key<b.key){
+                        return -1
+                    }else{
+                        return 0
+                    }
+                })
+            }
+        })
+    },
+    methods : {
+        isCiti(d){
+            var citi = this.citiesList;
+            for(let i=0;i<citi.length;i++){
+                if(citi[i].key === d){
+                    return false
+                }
+            }
+            return true
+        },
+        handlerTop(index){
+            var h2 = this.$refs.city_sort.getElementsByTagName('h2');
+            this.$refs.city_list.handlerToTop(-h2[index].offsetTop);
+        },
+        handlerCity(nm,id){
+            window.localStorage.setItem('nm',nm)
+            window.localStorage.setItem('id',id)
+            this.$store.commit('city/CITY_INFO',{nm:nm,id:id})
+            this.$router.push('/movie/nowplaying')
+        }
+    },
+    components : {
+        BScroll
     }
-
 }
 </script>
 

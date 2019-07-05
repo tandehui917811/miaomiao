@@ -1,27 +1,72 @@
 <template>
-    <div class="movie_body">
-        <ul>
-            <li>
-                <div class="pic_show"><img src="/images/movie_1.jpg"></div>
-                <div class="info_list">
-                    <h2>无名之辈</h2>
-                    <p>观众评 <span class="grade">9.2</span></p>
-                    <p>主演: 陈建斌,任素汐,潘斌龙</p>
-                    <p>今天55家影院放映607场</p>
-                </div>
-                <div class="btn_mall">
-                    购票
-                </div>
-            </li>
-        </ul>
+    <div class="movie_body" ref='movie_body'>  
+        <loading v-if='isloading'/>
+        <BScroll  v-else :handlerScroll = handlerScroll :handlerTouch='handlerTouch'>
+            <ul>
+                <li class='text'>{{ text }}</li>
+                <li v-for='item in movieList' :key='item.id'>
+                    <div class="pic_show"><img :src="item.img | setWH('128.200')"></div>
+                    <div class="info_list">
+                        <h2>{{ item.nm }}</h2>
+                        <p>观众评 <span class="grade">{{ item.sc }}</span></p>
+                        <p>主演: {{ item.star }}</p>
+                        <p>{{ item.showInfo }}</p>
+                    </div>
+                    <div class="btn_mall">
+                        购票
+                    </div>
+                </li>
+            </ul>
+        </BScroll> 
     </div>
 </template>
 
 <script>
+import loading from '@/components/Loading'
+import BScroll from '@/components/BScroll'
 export default {
     name : 'NowPlaying',
     data(){
-        return {}
+        return {
+            movieList : [],
+            text : "",
+            isloading : true
+        }
+    },
+    activated(){
+        var id = this.$store.state.city.id;
+        this.axios.get('/api/movieOnInfoList?cityId='+id).then((res) => {
+            var msg = res.data.msg;
+            if(msg == 'ok'){
+                this.movieList = res.data.data.movieList;
+                this.isloading = false;
+            }
+        });
+    },
+    components : {
+        BScroll,
+        loading
+    },
+    methods : {
+        handlerScroll(pos){
+            if(pos.y > 30){
+                this.text = "正在更新中..."
+                this.axios.get('/api/movieOnInfoList?cityId=11').then((res) => {
+                    var msg = res.data.msg;
+                    if(msg == 'ok'){
+                        this.movieList = res.data.data.movieList; 
+                    }
+                })
+            }
+        },
+        handlerTouch(pos){
+            if(pos.y > 30){
+                this.text = "更新完成"
+                setTimeout(() => {
+                    this.text = ''
+                },1000)
+            }
+        }
     }
 }
 </script>
@@ -30,6 +75,7 @@ export default {
 #content .movie_body{ flex:1; overflow:auto;}
 .movie_body ul{ margin:0 12px; overflow: hidden;}
 .movie_body ul li{ margin-top:12px; display: flex; align-items:center; border-bottom: 1px #e6e6e6 solid; padding-bottom: 10px;}
+.movie_body .text{padding: 0;margin: 0;border:none}
 .movie_body .pic_show{ width:64px; height: 90px;}
 .movie_body .pic_show img{ width:100%;}
 .movie_body .info_list { margin-left: 10px; flex:1; position: relative;}
